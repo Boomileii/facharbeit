@@ -24,11 +24,16 @@ type BlockHeader struct {
 	Transactions []Transaction
 }
 
+type HashResult struct {
+	Hash  string
+	Nonce int
+}
+
 var hashCounter uint64
 var hashMutex sync.Mutex
 
 func main() {
-	fmt.Println("Starting...")
+	fmt.Println("Starting...", runtime.NumCPU())
 	startTime := time.Now()
 
 	go monitorHashRate()
@@ -67,7 +72,7 @@ func calculateHash(blockHeader *BlockHeader, difficulty int) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	resultChan := make(chan string, workers)
+	resultChan := make(chan HashResult, workers)
 	wg := sync.WaitGroup{}
 
 	var txData string
@@ -83,13 +88,14 @@ func calculateHash(blockHeader *BlockHeader, difficulty int) {
 	}
 
 	result := <-resultChan
-	fmt.Println("Hash found: ", result)
+	fmt.Println("Hash found: ", result.Hash)
+	fmt.Println("Nonce: ", result.Nonce)
 	cancel()
 	wg.Wait()
 
 }
 
-func calcNonce(startNonce int, blockData string, difficulty int, resultChan chan string, wg *sync.WaitGroup, ctx context.Context) {
+func calcNonce(startNonce int, blockData string, difficulty int, resultChan chan HashResult, wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
 	nonce := startNonce
 	workers := runtime.NumCPU()
@@ -107,7 +113,10 @@ func calcNonce(startNonce int, blockData string, difficulty int, resultChan chan
 			hashMutex.Unlock()
 
 			if hashHex[:difficulty] == strings.Repeat("0", difficulty) {
-				resultChan <- hashHex
+				resultChan <- HashResult{
+					Hash:  hashHex,
+					Nonce: nonce,
+				}
 				return
 			}
 			nonce += workers
