@@ -33,7 +33,7 @@ export default function Blockchain() {
         setBlocks([...blocks, block])
     }
 
-    async function mineBlock(blockIndex) {
+    async function mineBlock(blockIndex, setIsMining) {
         console.log("Mining block", blockIndex);
 
         let nonce = 0
@@ -43,6 +43,7 @@ export default function Blockchain() {
             const hash = await calculateBlockHash(blockIndex, block.prevHash, block.transactions, nonce)
             if (hash.startsWith("0".repeat(difficulty))) {
                 updateBlock(blockIndex, hash, true, nonce)
+                setIsMining(false)
                 return
             }
             nonce++
@@ -163,8 +164,10 @@ export default function Blockchain() {
                         removeTransaction={removeTransaction} />)
                 }
             </div>
+            <div className="flex gap-5">
             <button onClick={() => createBlock()}>Add block</button>
-            <button onClick={() => addTransaction(1, "fafaf", "fagehs", "129")}>fafafaf</button>
+            <button onClick={() => addTransaction(1, "fafaf", "fagehs", "129")}>TestButton</button>
+            </div>
         </div>
     )
 }
