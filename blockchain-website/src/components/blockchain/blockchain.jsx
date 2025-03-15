@@ -33,19 +33,26 @@ export default function Blockchain() {
         setBlocks([...blocks, block])
     }
 
-    async function mineBlock(blockIndex, setIsMining) {
+    async function mineBlock(blockIndex, setIsMining, setCurrentNonce) {
         console.log("Mining block", blockIndex);
 
         let nonce = 0
         while (true) {
-            let block = blocks[blockIndex]
+            const block = blocks[blockIndex]
+            const prevBlock = blocks[blockIndex - 1]
             if (block.valid) return
             const hash = await calculateBlockHash(blockIndex, block.prevHash, block.transactions, nonce)
             if (hash.startsWith("0".repeat(difficulty))) {
-                updateBlock(blockIndex, hash, true, nonce)
+                if (prevBlock.valid) {
+                    updateBlock(blockIndex, hash, true, nonce)
+                } else {
+                    updateBlock(blockIndex, hash, false, nonce)
+                }
                 setIsMining(false)
+                // setCurrentNonce(null)
                 return
             }
+            // setCurrentNonce(nonce)
             nonce++
         }
     }
@@ -98,6 +105,7 @@ export default function Blockchain() {
     }
 
     function addTransaction(blockIndex, from, to, amount) {
+        if (blockIndex === 0) return
         let updatedBlocks = blocks.map((block, index) => {
 
             if (blockIndex === index) {
@@ -111,6 +119,7 @@ export default function Blockchain() {
     }
 
     function removeTransaction(blockIndex, transactionIndex) {
+        if (blockIndex === 0) return
         let updatedBlocks = blocks.map((block, index) => {
 
             if (blockIndex === index) {
@@ -131,7 +140,6 @@ export default function Blockchain() {
 
 
     async function calculateBlockHash(index, prevHash, transactions, nonce) {
-
         const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify({ index, prevHash, transactions, nonce })));
         const hashArray = new Uint8Array(hashBuffer);
         const hexHash = Array.from(hashArray).map(byte => byte.toString(16).padStart(2, "0")).join("");
@@ -153,7 +161,7 @@ export default function Blockchain() {
 
     return (
         <div className="">
-            <div className="flex gap-5 items-center justify-center h-[20rem] flex-wrap">
+            <div className="flex gap-5 items-center justify-center flex-wrap">
                 {
                     blocks.map((block, index) => <Block
                         key={index}
@@ -165,8 +173,8 @@ export default function Blockchain() {
                 }
             </div>
             <div className="flex gap-5">
-            <button onClick={() => createBlock()}>Add block</button>
-            <button onClick={() => addTransaction(1, "fafaf", "fagehs", "129")}>TestButton</button>
+                <button onClick={() => createBlock()}>Add block</button>
+                <button onClick={() => addTransaction(1, "fafaf", "fagehs", "129")}>TestButton</button>
             </div>
         </div>
     )
