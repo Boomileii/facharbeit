@@ -46,7 +46,7 @@ func main() {
 				To:     "Alice",
 				Amount: "100"},
 		},
-	}, 6)
+	}, 8)
 
 	fmt.Println("Time taken: ", time.Since(startTime))
 }

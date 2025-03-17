@@ -2,38 +2,42 @@
 
 import { useEffect, useState } from "react"
 import Block from "./block"
-
+import { FaPlus, FaMinus, FaM } from "react-icons/fa6";
 
 
 
 export default function Blockchain() {
-    const difficulty = 4
+    const [difficulty, setDifficulty] = useState(1)
     const [loading, setLoading] = useState(true)
-    const [blocks, setBlocks] = useState([
-        {
+    const [blocks, setBlocks] = useState([])
+
+    async function generateGenesisBlock() {
+        const block = {
             prevHash: "00000000000000000000000000000000",
             transactions: [],
-            hash: calculateBlockHash(0, "00000000000000000000000000000000000", [], 0),
+            hash: await calculateBlockHash(0, "00000000000000000000000000000000000", [], 0),
             valid: true,
             nonce: 0,
         }
-    ])
+        setBlocks([block])
 
-    function createBlock() {
+    }
+    async function createBlock() {
 
         let block = {
             prevHash: blocks[blocks.length - 1].hash,
-            hash: "0000",
+            hash: "",
             transactions: [],
             valid: false,
             nonce: 0,
         }
+        console.log("created block", blocks.length, block.prevHash, block.transactions, block.nonce);
 
-        block.hash = calculateBlockHash(blocks.length + 1, block.prevHash, block.transactions, block.nonce)
+        block.hash = await calculateBlockHash(blocks.length, block.prevHash, block.transactions, block.nonce)
         setBlocks([...blocks, block])
     }
 
-    async function mineBlock(blockIndex, setIsMining, setCurrentNonce) {
+    async function mineBlock(blockIndex, setIsMining) {
         console.log("Mining block", blockIndex);
 
         let nonce = 0
@@ -49,35 +53,51 @@ export default function Blockchain() {
                     updateBlock(blockIndex, hash, false, nonce)
                 }
                 setIsMining(false)
-                // setCurrentNonce(null)
                 return
             }
-            // setCurrentNonce(nonce)
+
             nonce++
         }
     }
 
     async function validateBlocks() {
         console.log(blocks);
+        console.log("validating");
 
-        blocks.forEach(async (block, i) => {
-            if (i === 0) return
-            console.log(block.nonce);
+        for (let i = 1; i < blocks.length; i++) {
+            console.log("validate", "Validating block", i);
 
-            console.log("Validating block", i);
-            const hash = await calculateBlockHash(i, block.prevHash, block.transactions, block.nonce)
-            if (block.hash !== hash) {
-                updateBlock(i, hash, false, block.valid)
+            const block = blocks[i];
+            const previousBlock = blocks[i - 1];
+
+            const hash = await calculateBlockHash(i, block.prevHash, block.transactions, block.nonce);
+            const isValidProofOfWork = hash.startsWith("0".repeat(difficulty));
+            const isPreviousHashValid = block.prevHash === previousBlock.hash;
+            const isSameHash = block.hash === hash
+
+            console.log("isValidProofOfWork", i, isValidProofOfWork);
+            console.log("isPreviousHashValid", i, isPreviousHashValid);
+            console.log("isSameHash", i, isSameHash);
+
+            // all good
+            if (isValidProofOfWork && isPreviousHashValid && isSameHash && block.valid === false) {
+                updateBlock(i, false, true, false, false)
+            } else {
+                // something not good 
+
+                if ((!isPreviousHashValid || !isSameHash)) {
+
+                    console.log("prevh val", previousBlock.hash);
+
+                    updateBlock(i, hash, null, false, previousBlock.hash)
+                }
+
             }
-            if ((!hash.startsWith("0".repeat(difficulty)) || block.prevHash !== blocks[i - 1].hash) && block.valid) {
-                console.log("invalid block", i);
-
-                updateBlock(i, false, false, false)
-            }
-        })
+        }
     }
 
-    function updateBlock(blockIndex, hash, valid = null, nonce = false) {
+
+    function updateBlock(blockIndex, hash, valid = null, nonce = false, prevHash = false) {
         console.log("Updating block", blockIndex, hash, valid, nonce);
 
         let updatedBlocks = blocks.map((block, index) => {
@@ -85,6 +105,7 @@ export default function Blockchain() {
                 let updatedBlock = hash ? { ...block, hash } : { ...block }
                 if (nonce) updatedBlock.nonce = nonce;
                 if (valid !== null) updatedBlock.valid = valid;
+                if (prevHash) updatedBlock.prevHash = prevHash
                 return updatedBlock;
             }
             if (valid === false && index >= blockIndex) {
@@ -100,7 +121,6 @@ export default function Blockchain() {
             };
         }
 
-        console.log(updatedBlocks);
         setBlocks(updatedBlocks);
     }
 
@@ -130,12 +150,13 @@ export default function Blockchain() {
 
         })
         setBlocks(updatedBlocks)
-
     }
 
 
     function remvoveBlock(blockIndex) {
-        setBlocks(blocks.filter((block, index) => index !== blockIndex))
+
+        if (blockIndex === 0) return
+        setBlocks(blocks.filter((block, index) => index !== blockIndex));
     }
 
 
@@ -147,20 +168,64 @@ export default function Blockchain() {
         return hexHash;
     }
 
-    useEffect(() => {
+    function saveBlockchain() {
+        localStorage.setItem("blockchain", JSON.stringify(blocks))
 
+        console.log("saving", JSON.stringify(blocks));
+        console.log(blocks);
+
+
+    }
+    function loadBlockchain() {
+        const blockchainString = localStorage.getItem("blockchain")
+        const blockchainData = JSON.parse(blockchainString)
+
+        console.log("blockchainData", blockchainData);
+
+        if (!blockchainData) {
+            throw new Error("No available LocalStorage data")
+        }
+        setBlocks(blockchainData)
+    }
+
+    useEffect(() => {
         validateBlocks()
+        if (blocks.length !== 0) {
+            saveBlockchain()
+        }
     }, [blocks])
 
     useEffect(() => {
-        createBlock()
+        try {
+            loadBlockchain()
+        } catch (error) {
+            console.log(error);
+
+            generateGenesisBlock()
+        }
+
         setLoading(false)
     }, [])
+
+    useEffect(() => {
+        validateBlocks()
+    }, [difficulty])
 
     if (loading) return <div>Loading...</div>
 
     return (
-        <div className="">
+        <div className="flex flex-col items-center justify-center gap-3">
+            <div className="flex items-center gap-5 border rounded-lg w-[14rem] justify-center">
+                <span className="p-2">Schwierigkeit<span className="ml-3">{difficulty}</span></span>
+                <div className="flex gap-3 border-l h-full items-center p-2">
+                    <FaMinus onClick={() => {
+                        setDifficulty((prev) => prev - 1)
+                    }} />
+                    <FaPlus onClick={() => {
+                        setDifficulty((prev) => prev + 1)
+                    }} />
+                </div>
+            </div>
             <div className="flex gap-5 items-center justify-center flex-wrap">
                 {
                     blocks.map((block, index) => <Block
@@ -169,12 +234,17 @@ export default function Blockchain() {
                         blockIndex={index}
                         mineBlock={mineBlock}
                         addTransaction={addTransaction}
-                        removeTransaction={removeTransaction} />)
+                        removeTransaction={removeTransaction}
+                        removeBlock={remvoveBlock} />
+
+                    )
+
                 }
             </div>
             <div className="flex gap-5">
                 <button onClick={() => createBlock()}>Add block</button>
-                <button onClick={() => addTransaction(1, "fafaf", "fagehs", "129")}>TestButton</button>
+                {/* <button onClick={() => saveBlockchain()}>TestButton</button>
+                <button onClick={() => loadBlockchain()}>TestButton2</button> */}
             </div>
         </div>
     )
