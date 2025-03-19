@@ -11,7 +11,7 @@ export default function TransactionTable({ transactions, addTransaction, removeT
 
     return (
         <div className="w-full p-5 flex flex-col items-center justify-center gap-2">
-            <span className="">Transactions</span>
+            <span className="font-medium">Transactions</span>
             <div className="w-full overflow-x-auto">
                 <table className="table-auto border-collapse min-w-full border border-light">
                     <thead className="border-b">
@@ -42,14 +42,14 @@ export default function TransactionTable({ transactions, addTransaction, removeT
                                     <input
                                         ref={fromInputRef}
                                         placeholder="From"
-                                        className="w-[4.2rem] border border-light outline-none pl-2 p-1"
+                                        className="w-[3.5rem] border border-light outline-none pl-2 p-1 placeholder:text-orange-light"
                                     />
                                 </td>
                                 <td className="px-2 py-2">
                                     <input
                                         ref={toInputRef}
                                         placeholder="To"
-                                        className="w-[4.2rem] border border-light outline-none pl-2 p-1"
+                                        className="w-[3.5rem] border border-light outline-none pl-2 p-1 placeholder:text-orange-light"
                                     />
                                 </td>
                                 <td className="px-2 py-2">
@@ -58,7 +58,7 @@ export default function TransactionTable({ transactions, addTransaction, removeT
                                         placeholder="Amount"
                                         type="number"
                                         min={1}
-                                        className="w-[5rem] border border-light outline-none pl-2 p-1"
+                                        className="w-[5rem] placeholder:text-orange-light border border-light outline-none pl-2 p-1"
                                     />
                                 </td>
                                 <td className="px-2 py-2">
