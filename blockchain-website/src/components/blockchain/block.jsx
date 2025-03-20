@@ -1,15 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import TransactionTable from "./transactionsTable"
 import { LuPickaxe } from "react-icons/lu";
 import { ImCross } from "react-icons/im";
 import { motion } from "framer-motion";
 import BlockItemCopy from "./blockItem";
-export default function Block({ blockIndex, blockData, mineBlock, addTransaction, removeTransaction, removeBlock, lastBlockIndex }) {
+export default function Block({ blockIndex, blockData, mineBlock, addTransaction, removeTransaction, removeBlock, lastBlockIndex, setIsMiningCanceled }) {
 
-    const [currentNonce, setCurrentNonce] = useState(null)
     const [isMining, setIsMining] = useState(false)
+    const miningAbortRef = useRef(false)
     useEffect(() => {
 
     }, [])
@@ -27,14 +27,24 @@ export default function Block({ blockIndex, blockData, mineBlock, addTransaction
             <div className="flex flex-col items-center w-full justify-between h-full pb-4">
                 <TransactionTable blockIndex={blockIndex} addTransaction={addTransaction} removeTransaction={removeTransaction} transactions={blockData.transactions} />
                 <div className="flex flex-col self-center px-5">
-                    <BlockItemCopy title={"Nonce"} value={currentNonce ? currentNonce : blockData.nonce} />
+                    <BlockItemCopy title={"Nonce"} value={blockData.nonce} />
                     <BlockItemCopy title={"Prev Hash"} value={blockData.prevHash} />
                     <BlockItemCopy title={"Hash"} value={blockData.hash} />
                 </div>
                 <button className="flex gap-2 items-center justify-center border w-28 h-9 rounded-lg" onClick={() => {
+
+                    miningAbortRef.current = false
                     if (!isMining && !blockData.valid) {
+
                         setIsMining(true)
-                        mineBlock(blockIndex, setIsMining, setCurrentNonce)
+                        mineBlock(blockIndex, setIsMining, miningAbortRef)
+                        return
+                    }
+
+
+                    if (isMining) {
+                        console.log("canceling");
+                        miningAbortRef.current = true
                     }
 
 

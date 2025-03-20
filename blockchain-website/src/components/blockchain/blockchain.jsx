@@ -7,18 +7,21 @@ import { FaPlus, FaMinus } from "react-icons/fa6";
 
 
 export default function Blockchain() {
-    const [difficulty, setDifficulty] = useState(1)
+    const [difficulty, setDifficulty] = useState(2)
     const [loading, setLoading] = useState(true)
     const [blocks, setBlocks] = useState([])
     const [isBlockMinung, setIsBlockMining] = useState(false)
 
     async function generateGenesisBlock() {
+
+        console.log("generating genesis");
+
         const block = {
             prevHash: "00000000000000000000000000000000",
             transactions: [],
             hash: await calculateBlockHash(0, "00000000000000000000000000000000000", [], 0),
             valid: true,
-            nonce: 0,
+            nonce: 5,
         }
         setBlocks([block])
 
@@ -38,17 +41,22 @@ export default function Blockchain() {
         setBlocks([...blocks, block])
     }
 
-    async function mineBlock(blockIndex, setIsMining) {
+    async function mineBlock(blockIndex, setIsMining, miningAbortRef) {
         if (isBlockMinung) {
             setIsMining(false)
             return
         }
+
+
         setIsBlockMining(true)
 
         console.log("Mining block", blockIndex);
 
         let nonce = 0
-        while (true) {
+        while (!miningAbortRef.current) {
+
+
+
             const block = blocks[blockIndex]
             const prevBlock = blocks[blockIndex - 1]
             if (block.valid) return
@@ -66,7 +74,14 @@ export default function Blockchain() {
 
             nonce++
         }
+
+        console.log("aborting mining");
+
+        setIsBlockMining(false)
+        setIsMining(false)
     }
+
+
     async function validateBlocks() {
 
         console.log(blocks);
@@ -186,17 +201,17 @@ export default function Blockchain() {
 
     function saveBlockchain() {
         localStorage.setItem("blockchain", JSON.stringify(blocks))
-
-        console.log("saving", JSON.stringify(blocks));
-        console.log(blocks);
-
-
+        localStorage.setItem("difficulty", difficulty)
     }
     function loadBlockchain() {
         const blockchainString = localStorage.getItem("blockchain")
         const blockchainData = JSON.parse(blockchainString)
+        const difficulty = localStorage.getItem("difficulty")
 
-        console.log("blockchainData", blockchainData);
+
+        if (difficulty) {
+            setDifficulty(parseInt(difficulty))
+        }
 
         if (!blockchainData) {
             throw new Error("No available LocalStorage data")
@@ -213,11 +228,12 @@ export default function Blockchain() {
     }, [blocks])
 
     useEffect(() => {
+        console.log("yes");
+
         try {
             loadBlockchain()
         } catch (error) {
             console.log(error);
-
             generateGenesisBlock()
         }
 
@@ -226,12 +242,15 @@ export default function Blockchain() {
 
     useEffect(() => {
         validateBlocks()
+        if (blocks.length !== 0) {
+            saveBlockchain()
+        }
     }, [difficulty])
 
     if (loading) return <div>Loading...</div>
 
     return (
-        <div className="flex flex-col items-center justify-center gap-3 py-5">
+        <div className="flex flex-col items-center justify-center gap-8">
             <div className="flex gap-5 items-center justify-center flex-wrap">
                 <div className="flex items-center gap-5 border rounded-lg w-[14rem] justify-center">
                     <div>
@@ -239,18 +258,25 @@ export default function Blockchain() {
                     </div>
                     <div className="flex gap-3 border-l h-full items-center p-2">
                         <FaMinus onClick={() => {
+
+                            if (difficulty <= 2) return
                             setDifficulty((prev) => prev - 1)
                         }} />
                         <FaPlus onClick={() => {
+                            if (difficulty >= 5) return
                             setDifficulty((prev) => prev + 1)
                         }} />
                     </div>
                 </div>
 
-                <div className="border px-8 py-2 rounded-lg">Reset</div>
+                <div className="border px-8 py-2 rounded-lg" onClick={() => {
+
+                    setBlocks([])
+                    generateGenesisBlock()
+                }}>Reset</div>
             </div>
 
-            <div className="flex gap-5 items-center justify-center flex-wrap">
+            <div className="flex gap-5 items-center justify-center flex-wrap max-w-[70rem]">
                 {
                     blocks.map((block, index) => <Block
                         key={index}
