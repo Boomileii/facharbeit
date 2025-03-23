@@ -53,7 +53,7 @@ export default function HeightCounter() {
 
     return (
 
-        <div className="border border-light-bg rounded-lg w-[25rem] h-[15rem] flex flex-col items-center">
+        <div className="border border-light-bg rounded-lg w-full h-full flex flex-col items-center">
             <span className="font-semibold border-b w-full flex items-center justify-center p-5">Blockchain height</span>
             <div className="flex flex-col items-center justify-center w-full h-[9rem]">
                 <span className="font-medium text-2xl">{displayedBlockHeight}</span>

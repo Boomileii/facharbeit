@@ -46,7 +46,7 @@ export default function BtcChart() {
     }, []);
 
     return (
-        <div className="border border-light-bg rounded-lg w-[25rem] h-[15rem] flex flex-col items-center overflow-hidden">
+        <div className="border border-light-bg rounded-lg w-full h-full flex flex-col items-center overflow-hidden">
             <span className="font-semibold border-b w-full flex items-center justify-center p-5">Bitcoin price</span>
             <ResponsiveContainer style={{ height: "100%", width: "100%" }}>
 

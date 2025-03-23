@@ -1,5 +1,4 @@
 import Blockchain from "@/components/blockchain/blockchain";
-
 export default function Home() {
 
 

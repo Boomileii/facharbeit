@@ -4,9 +4,8 @@ import { useEffect, useState } from "react"
 import Block from "./block"
 import { FaPlus, FaMinus } from "react-icons/fa6";
 
-
-
 export default function Blockchain() {
+    
     const [difficulty, setDifficulty] = useState(2)
     const [loading, setLoading] = useState(true)
     const [blocks, setBlocks] = useState([])
@@ -252,11 +251,11 @@ export default function Blockchain() {
     return (
         <div className="flex flex-col items-center justify-center gap-8">
             <div className="flex gap-5 items-center justify-center flex-wrap">
-                <div className="flex items-center gap-5 border rounded-lg w-[14rem] justify-center">
-                    <div>
-                        <div className="p-2">Schwierigkeit<span className="ml-3">{difficulty}</span></div>
-                    </div>
-                    <div className="flex gap-3 border-l h-full items-center p-2">
+                <div className="flex items-center gap-5 border rounded-lg w-[12rem] h-[2.5rem] justify-center">
+                   
+                    <div className="text-sm">Difficulty {difficulty}</div>
+               
+                    <div className="flex gap-3 h-full justify-center items-center">
                         <FaMinus onClick={() => {
 
                             if (difficulty <= 2) return
@@ -286,12 +285,13 @@ export default function Blockchain() {
                         addTransaction={addTransaction}
                         removeTransaction={removeTransaction}
                         removeBlock={remvoveBlock}
-                        lastBlockIndex={blocks.length - 1} />
-
+                        lastBlockIndex={blocks.length - 1}
+                        createBlock={createBlock}
+                         />
                     )
 
                 }
-                <button className="border-2 text-orange-dark border-white rounded-full h-[2.5rem] w-[2.5rem] flex items-center justify-center" onClick={() => createBlock()}><FaPlus size={25} /></button>
+                
             </div>
         </div>
     )
